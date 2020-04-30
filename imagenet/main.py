@@ -275,35 +275,42 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     model.train()
 
     end = time.time()
+    
     for i, (images, target) in enumerate(train_loader):
         # measure data loading time
-        data_time.update(time.time() - end)
+        #intercept the loop
+        for i in range(10000):
+            data_time.update(time.time() - end)
+            
+            if args.gpu is not None:
+                images = images.cuda(args.gpu, non_blocking=True)
+                pass
+            target = target.cuda(args.gpu, non_blocking=True)
+                
+            # compute output
+            output = model(images)
+            loss = criterion(output, target)
 
-        if args.gpu is not None:
-            images = images.cuda(args.gpu, non_blocking=True)
-        target = target.cuda(args.gpu, non_blocking=True)
+            # measure accuracy and record loss
+            #acc1, acc5 = accuracy(output, target, topk=(1, 5))
+            losses.update(loss.item(), images.size(0))
+            #top1.update(acc1[0], images.size(0))
+            #top5.update(acc5[0], images.size(0))
+            
+            # compute gradient and do SGD step
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
-        # compute output
-        output = model(images)
-        loss = criterion(output, target)
+            # measure elapsed time
+            batch_time.update(time.time() - end)
+            end = time.time()
 
-        # measure accuracy and record loss
-        #acc1, acc5 = accuracy(output, target, topk=(1, 5))
-        losses.update(loss.item(), images.size(0))
-        #top1.update(acc1[0], images.size(0))
-        #top5.update(acc5[0], images.size(0))
-
-        # compute gradient and do SGD step
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        # measure elapsed time
-        batch_time.update(time.time() - end)
-        end = time.time()
-
-        if i % args.print_freq == 0:
-            progress.display(i)
+            if i % args.print_freq == 0:
+                progress.display(i)
+                pass
+            pass
+        pass
 
 
 def validate(val_loader, model, criterion, args):
