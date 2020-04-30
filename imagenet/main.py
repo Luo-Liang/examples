@@ -305,7 +305,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
-
+            print(i)
             if i % args.print_freq == 0:
                 progress.display(i)
                 pass
