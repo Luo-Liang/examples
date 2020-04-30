@@ -249,15 +249,15 @@ def main_worker(gpu, ngpus_per_node, args):
         is_best = acc1 > best_acc1
         best_acc1 = max(acc1, best_acc1)
 
-        if not args.multiprocessing_distributed or (args.multiprocessing_distributed
-                and args.rank % ngpus_per_node == 0):
-            save_checkpoint({
-                'epoch': epoch + 1,
-                'arch': args.arch,
-                'state_dict': model.state_dict(),
-                'best_acc1': best_acc1,
-                'optimizer' : optimizer.state_dict(),
-            }, is_best)
+        #if not args.multiprocessing_distributed or (args.multiprocessing_distributed
+        #        and args.rank % ngpus_per_node == 0):
+        #    save_checkpoint({
+        #        'epoch': epoch + 1,
+        #        'arch': args.arch,
+        #        'state_dict': model.state_dict(),
+        #        'best_acc1': best_acc1,
+        #        'optimizer' : optimizer.state_dict(),
+        #    }, is_best)
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
