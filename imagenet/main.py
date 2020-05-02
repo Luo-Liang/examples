@@ -73,6 +73,7 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
                          'N processes per node, which has N GPUs. This is the '
                          'fastest way to use PyTorch for either single node or '
                          'multi node data parallel training')
+parser.add_argument('--tag', default='Unknown Cloud', type=str)
 
 best_acc1 = 0
 
@@ -268,8 +269,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     top5 = AverageMeter('Acc@5', ':6.2f')
     progress = ProgressMeter(
         len(train_loader),
-        [batch_time, data_time, losses, top1, top5],
-        prefix="Net: [{}]".format(args.arch))
+        [batch_time],
+        prefix="Net: {} world: {} batch:{} on {}".format(args.arch, args.world_size, args.batch_size, args.tag))
 
     # switch to train mode
     model.train()
