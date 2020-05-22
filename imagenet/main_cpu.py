@@ -4,7 +4,7 @@ import random
 import shutil
 import time
 import warnings
-
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.parallel
@@ -277,6 +277,12 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     model.train()
 
     end = time.time()
+
+    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
+    params = sum([np.prod(p.size()) for p in model_parameters])
+
+    print("detected model size: %d MB\n" % (params * 4 / 1024 / 1024))
+
     
     for i, (images, target) in enumerate(train_loader):
         # measure data loading time
