@@ -212,7 +212,7 @@ def main_worker(gpu, ngpus_per_node, args):
         normalize,
     ])
     if args.data == None:
-        train_dataset = datasets.FakeData(size=1000000, image_size=(3, 224, 224), num_classes=200, transform=transform)
+        train_dataset = datasets.FakeData(size=100000000, image_size=(3, 224, 224), num_classes=200, transform=transform)
         val_loader = torch.utils.data.DataLoader(datasets.FakeData(size=1001, image_size=(3, 224, 224), num_classes=200, transform=transform))
         pass
     else:
