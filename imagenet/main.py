@@ -203,14 +203,15 @@ def main_worker(gpu, ngpus_per_node, args):
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
 
-    train_dataset = datasets.ImageFolder(
-        traindir,
-        transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            normalize,
-        ]))
+    train_dataset = datasets.FakeData(size=1000000,image_size=(3,224,224),num_classes=200)
+    #datasets.ImageFolder(
+    #    traindir,
+    #    transforms.Compose([
+    #        transforms.RandomResizedCrop(224),
+    #        transforms.RandomHorizontalFlip(),
+    #        transforms.ToTensor(),
+    #        normalize,
+    #    ]))
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
