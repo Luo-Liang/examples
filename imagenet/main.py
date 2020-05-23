@@ -23,7 +23,7 @@ model_names = sorted(name for name in models.__dict__
     and callable(models.__dict__[name]))
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
-parser.add_argument('data', metavar='DIR',
+parser.add_argument('--data', type=str,
                     help='path to dataset', default=None)
 parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet18',
                     choices=model_names,
@@ -198,8 +198,10 @@ def main_worker(gpu, ngpus_per_node, args):
     cudnn.benchmark = True
 
     # Data loading code
-    traindir = os.path.join(args.data, 'train')
-    valdir = os.path.join(args.data, 'val')
+    if args.data != None:
+        traindir = os.path.join(args.data, 'train')
+        valdir = os.path.join(args.data, 'val')
+        pass
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
     transform = transforms.Compose([
@@ -211,6 +213,7 @@ def main_worker(gpu, ngpus_per_node, args):
     ])
     if args.data == None:
         train_dataset = datasets.FakeData(size=1000000, image_size=(3, 224, 224), num_classes=200, transform=transform)
+        val_loader = torch.utils.data.DataLoader(datasets.FakeData(size=1001, image_size=(3, 224, 224), num_classes=200, transform=transform))
         pass
     else:
         train_dataset = datasets.ImageFolder(
@@ -221,6 +224,16 @@ def main_worker(gpu, ngpus_per_node, args):
             transforms.ToTensor(),
             normalize,
             ]))
+        val_loader = torch.utils.data.DataLoader(
+            datasets.ImageFolder(valdir, transforms.Compose([
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                normalize,
+            ])),
+            batch_size=args.batch_size, shuffle=False,
+            num_workers=args.workers, pin_memory=True)
+        
         pass
 
     if args.distributed:
@@ -232,15 +245,6 @@ def main_worker(gpu, ngpus_per_node, args):
         train_dataset, batch_size=args.batch_size, shuffle=(train_sampler is None),
         num_workers=args.workers, pin_memory=True, sampler=train_sampler)
 
-    val_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(valdir, transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            normalize,
-        ])),
-        batch_size=args.batch_size, shuffle=False,
-        num_workers=args.workers, pin_memory=True)
 
     if args.evaluate:
         validate(val_loader, model, criterion, args)
@@ -255,11 +259,11 @@ def main_worker(gpu, ngpus_per_node, args):
         train(train_loader, model, criterion, optimizer, epoch, args)
 
         # evaluate on validation set
-        acc1 = validate(val_loader, model, criterion, args)
+        #acc1 = validate(val_loader, model, criterion, args)
 
         # remember best acc@1 and save checkpoint
-        is_best = acc1 > best_acc1
-        best_acc1 = max(acc1, best_acc1)
+        #is_best = acc1 > best_acc1
+        #best_acc1 = max(acc1, best_acc1)
 
         #if not args.multiprocessing_distributed or (args.multiprocessing_distributed
         #        and args.rank % ngpus_per_node == 0):
@@ -297,7 +301,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         print("actual loaded batch = %d" % len(images))
         # measure data loading time
         #intercept the loop
-        for i in range(10000):
+        #if i == 0:
+        for i in range(100000000):
             data_time.update(time.time() - end)
             
             if args.gpu is not None:
