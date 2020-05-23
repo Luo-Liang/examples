@@ -294,6 +294,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     print("detected model size: %d MB\n" % (params * 4 / 1024 / 1024))
     
     for i, (images, target) in enumerate(train_loader):
+        print("actual loaded batch = %d" % len(images))
         # measure data loading time
         #intercept the loop
         for i in range(10000):
