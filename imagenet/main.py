@@ -24,7 +24,7 @@ model_names = sorted(name for name in models.__dict__
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 parser.add_argument('data', metavar='DIR',
-                    help='path to dataset')
+                    help='path to dataset', default=None)
 parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet18',
                     choices=model_names,
                     help='model architecture: ' +
@@ -202,16 +202,26 @@ def main_worker(gpu, ngpus_per_node, args):
     valdir = os.path.join(args.data, 'val')
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
-
-    train_dataset = datasets.FakeData(size=1000000,image_size=(3,224,224),num_classes=200)
-    #datasets.ImageFolder(
-    #    traindir,
-    #    transforms.Compose([
-    #        transforms.RandomResizedCrop(224),
-    #        transforms.RandomHorizontalFlip(),
-    #        transforms.ToTensor(),
-    #        normalize,
-    #    ]))
+    transform = transforms.Compose([
+        # you can add other transformations in this list
+        transforms.RandomResizedCrop(224),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        normalize,
+    ])
+    if args.data == None:
+        train_dataset = datasets.FakeData(size=1000000, image_size=(3, 224, 224), num_classes=200, transform=transform)
+        pass
+    else:
+        train_dataset = datasets.ImageFolder(
+            traindir,
+            transforms.Compose([
+            transforms.RandomResizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            normalize,
+            ]))
+        pass
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
