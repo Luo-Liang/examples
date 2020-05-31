@@ -340,6 +340,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             if i % args.print_freq == 0:
                 progress.display(i)
                 print("forward = %s, backward = %s" % (acc_forward / args.print_freq, acc_backward / args.print_freq))
+                acc_forward = 0
+                acc_backward = 0     
                 pass
             pass
         pass
