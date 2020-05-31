@@ -17,6 +17,8 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
+import time
+
 
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
@@ -296,7 +298,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     params = sum([np.prod(p.size()) for p in model_parameters])
 
     print("detected model size: %d MB\n" % (params * 4 / 1024 / 1024))
-    
+    acc_forward = 0
+    acc_backward = 0
     for i, (images, target) in enumerate(train_loader):
         print("actual loaded batch = %d" % len(images))
         # measure data loading time
@@ -311,26 +314,32 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             target = target.cuda(args.gpu, non_blocking=True)
                 
             # compute output
+            fws = time.time_ns()
             output = model(images)
             loss = criterion(output, target)
 
             # measure accuracy and record loss
             #acc1, acc5 = accuracy(output, target, topk=(1, 5))
             losses.update(loss.item(), images.size(0))
+            fwe = time.time_ns()
+            acc_forward += fwe - fws
             #top1.update(acc1[0], images.size(0))
             #top5.update(acc5[0], images.size(0))
             
             # compute gradient and do SGD step
+            bws = time.time_ns()
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-
+            bwe = time.time_ns()
             # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
+            acc_backward += bwe - bws
             #print(i)
             if i % args.print_freq == 0:
                 progress.display(i)
+                print("forward = %s, backward = %s" % (acc_forward / args.print_freq, acc_backward / args.print_freq))
                 pass
             pass
         pass
