@@ -287,6 +287,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     progress = ProgressMeter(
         len(train_loader),
         [batch_time],
+        args.rank
         prefix="Net: {} world: {} batch:{} on {}".format(args.arch, args.world_size, args.batch_size, args.tag))
 
     # switch to train mode
@@ -355,6 +356,7 @@ def validate(val_loader, model, criterion, args):
     progress = ProgressMeter(
         len(val_loader),
         [batch_time, losses, top1, top5],
+        args.rank,
         prefix='Test: ')
 
     # switch to evaluate mode
@@ -422,15 +424,16 @@ class AverageMeter(object):
 
 
 class ProgressMeter(object):
-    def __init__(self, num_batches, meters, prefix=""):
+    def __init__(self, num_batches, meters, rank, prefix=""):
         self.batch_fmtstr = self._get_batch_fmtstr(num_batches)
         self.meters = meters
         self.prefix = prefix
+        self.rank = rank
 
     def display(self, batch):
         entries = [self.prefix + self.batch_fmtstr.format(batch)]
         entries += [str(meter) for meter in self.meters]
-        print('[%s] ' % args.rank + '\t'.join(entries), flush=True)
+        print('[%s] ' % self.rank + '\t'.join(entries), flush=True)
         
 
     def _get_batch_fmtstr(self, num_batches):
