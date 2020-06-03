@@ -287,7 +287,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     progress = ProgressMeter(
         len(train_loader),
         [batch_time],
-        args.rank
+        args.rank,
         prefix="Net: {} world: {} batch:{} on {}".format(args.arch, args.world_size, args.batch_size, args.tag))
 
     # switch to train mode
