@@ -330,7 +330,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             # compute gradient and do SGD step
             bws = time.time_ns()
             optimizer.zero_grad()
-            #loss.backward()
+            loss.backward()
             optimizer.step()
             bwe = time.time_ns()
             # measure elapsed time
