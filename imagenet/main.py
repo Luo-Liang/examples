@@ -405,21 +405,27 @@ class AverageMeter(object):
         self.name = name
         self.fmt = fmt
         self.reset()
+        self.runs = []
 
     def reset(self):
         self.val = 0
         self.avg = 0
         self.sum = 0
         self.count = 0
+        self.runs.clear()
 
     def update(self, val, n=1):
         self.val = val
         self.sum += val * n
         self.count += n
-        self.avg = self.sum / self.count
+        #self.avg = self.sum / self.count
+        self.runs += [val] * n
+        #skip first run. always wrong
+        self.avg = np.mean(self.runs[1:])
+        self.median = np.median(self.runs[1:])
 
     def __str__(self):
-        fmtstr = '{name} {val' + self.fmt + '} Average:[{avg' + self.fmt + '}]'
+        fmtstr = '{name} {val' + self.fmt + '} Average:[{avg' + self.fmt + '}] Median:[{median' + self.fmt + '}]'
         return fmtstr.format(**self.__dict__)
 
 
