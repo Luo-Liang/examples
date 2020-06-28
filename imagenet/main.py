@@ -404,8 +404,9 @@ class AverageMeter(object):
     def __init__(self, name, fmt=':f'):
         self.name = name
         self.fmt = fmt
+        self.runs = []        
         self.reset()
-        self.runs = []
+
 
     def reset(self):
         self.val = 0
