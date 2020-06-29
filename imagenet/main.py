@@ -335,7 +335,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             fws = time.time_ns()
             optimizer.step()
             fwe = time.time_ns()
-            acc_forward += few - fws
+            acc_forward += fwe - fws
 
             # measure elapsed time
             batch_time.update(time.time() - end)
