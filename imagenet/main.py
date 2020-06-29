@@ -308,14 +308,13 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         #if i == 0:
         for i in range(100000000):
             data_time.update(time.time() - end)
-            
+            fws = time.time_ns()            
             if args.gpu is not None:
                 images = images.cuda(args.gpu, non_blocking=True)
                 pass
             target = target.cuda(args.gpu, non_blocking=True)
                 
             # compute output
-            fws = time.time_ns()
             output = model(images)
             loss = criterion(output, target)
 
