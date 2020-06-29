@@ -320,7 +320,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             loss = criterion(output, target)
 
             # measure accuracy and record loss
-            #acc1, acc5 = accuracy(output, target, topk=(1, 5))
+            acc1, acc5 = accuracy(output, target, topk=(1, 5))
             losses.update(loss.item(), images.size(0))
             fwe = time.time_ns()
             acc_forward += fwe - fws
