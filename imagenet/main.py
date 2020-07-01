@@ -305,7 +305,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     params = sum([np.prod(p.size()) for p in model_parameters])
 
     print("detected model size: %d MB. average = %d KB\n" %
-          (params * 4 / 1024 / 1024, params * 4 / 1024 / len(model_parameters)))
+          (params * 4 / 1024 / 1024, params * 4 / 1024 / len(list(model_parameters))))
     acc_forward = 0
     acc_backward = 0
     for i, (images, target) in enumerate(train_loader):
