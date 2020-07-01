@@ -304,7 +304,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
 
-    print("detected model size: %d MB. average = %d KB\n" %
+    print("detected model size: %d MB. average = %s KB\n" %
           (params * 4 / 1024 / 1024, params * 4 / 1024 / len(list(model_parameters))))
     acc_forward = 0
     acc_backward = 0
