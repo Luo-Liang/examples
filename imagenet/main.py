@@ -301,11 +301,11 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
     end = time.time()
 
-    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
+    model_parameters = [x for x in model.parameters() if x.requires_grad]
     params = sum([np.prod(p.size()) for p in model_parameters])
-
-    print("detected model size: %d MB. average = %s KB\n" %
-          (params * 4 / 1024 / 1024, params * 4 / 1024 / len(list(model_parameters))))
+    #print(model_parameters)
+    print("detected model size: %d MB. average = %s B\n" %
+          (params * 4 / 1024 / 1024, params * 4 / len(model_parameters)))
     acc_forward = 0
     acc_backward = 0
     for i, (images, target) in enumerate(train_loader):
