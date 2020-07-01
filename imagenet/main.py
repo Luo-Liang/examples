@@ -21,8 +21,8 @@ import time
 
 
 model_names = sorted(name for name in models.__dict__
-    if name.islower() and not name.startswith("__")
-    and callable(models.__dict__[name]))
+                     if name.islower() and not name.startswith("__")
+                     and callable(models.__dict__[name]))
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 parser.add_argument('--data', type=str,
@@ -30,8 +30,8 @@ parser.add_argument('--data', type=str,
 parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet18',
                     choices=model_names,
                     help='model architecture: ' +
-                        ' | '.join(model_names) +
-                        ' (default: resnet18)')
+                    ' | '.join(model_names) +
+                    ' (default: resnet18)')
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
 parser.add_argument('--epochs', default=90, type=int, metavar='N',
@@ -109,7 +109,8 @@ def main():
         args.world_size = ngpus_per_node * args.world_size
         # Use torch.multiprocessing.spawn to launch distributed processes: the
         # main_worker process function
-        mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args))
+        mp.spawn(main_worker, nprocs=ngpus_per_node,
+                 args=(ngpus_per_node, args))
     else:
         # Simply call main_worker function
         main_worker(args.gpu, ngpus_per_node, args)
@@ -150,8 +151,10 @@ def main_worker(gpu, ngpus_per_node, args):
             # DistributedDataParallel, we need to divide the batch size
             # ourselves based on the total number of GPUs we have
             args.batch_size = int(args.batch_size / ngpus_per_node)
-            args.workers = int((args.workers + ngpus_per_node - 1) / ngpus_per_node)
-            model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
+            args.workers = int(
+                (args.workers + ngpus_per_node - 1) / ngpus_per_node)
+            model = torch.nn.parallel.DistributedDataParallel(
+                model, device_ids=[args.gpu])
         else:
             model.cuda()
             # DistributedDataParallel will divide and allocate batch_size to all
@@ -214,17 +217,19 @@ def main_worker(gpu, ngpus_per_node, args):
         normalize,
     ])
     if args.data == None:
-        train_dataset = datasets.FakeData(size=100000000, image_size=(3, 224, 224), num_classes=200, transform=transform)
-        val_loader = torch.utils.data.DataLoader(datasets.FakeData(size=1001, image_size=(3, 224, 224), num_classes=200, transform=transform))
+        train_dataset = datasets.FakeData(size=100000000, image_size=(
+            3, 224, 224), num_classes=200, transform=transform)
+        val_loader = torch.utils.data.DataLoader(datasets.FakeData(
+            size=1001, image_size=(3, 224, 224), num_classes=200, transform=transform))
         pass
     else:
         train_dataset = datasets.ImageFolder(
             traindir,
             transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            normalize,
+                transforms.RandomResizedCrop(224),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                normalize,
             ]))
         val_loader = torch.utils.data.DataLoader(
             datasets.ImageFolder(valdir, transforms.Compose([
@@ -235,18 +240,19 @@ def main_worker(gpu, ngpus_per_node, args):
             ])),
             batch_size=args.batch_size, shuffle=False,
             num_workers=args.workers, pin_memory=True)
-        
+
         pass
 
     if args.distributed:
-        train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
+        train_sampler = torch.utils.data.distributed.DistributedSampler(
+            train_dataset)
     else:
         train_sampler = None
 
     train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=args.batch_size, shuffle=(train_sampler is None),
+        train_dataset, batch_size=args.batch_size, shuffle=(
+            train_sampler is None),
         num_workers=args.workers, pin_memory=True, sampler=train_sampler)
-
 
     if args.evaluate:
         validate(val_loader, model, criterion, args)
@@ -267,7 +273,7 @@ def main_worker(gpu, ngpus_per_node, args):
         #is_best = acc1 > best_acc1
         #best_acc1 = max(acc1, best_acc1)
 
-        #if not args.multiprocessing_distributed or (args.multiprocessing_distributed
+        # if not args.multiprocessing_distributed or (args.multiprocessing_distributed
         #        and args.rank % ngpus_per_node == 0):
         #    save_checkpoint({
         #        'epoch': epoch + 1,
@@ -294,26 +300,27 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     model.train()
 
     end = time.time()
-    
+
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
 
-    print("detected model size: %d MB\n" % (params * 4 / 1024 / 1024))
+    print("detected model size: %d MB. average = %d KB\n" %
+          (params * 4 / 1024 / 1024, params * 4 / 1024 / len(model_parameters)))
     acc_forward = 0
     acc_backward = 0
     for i, (images, target) in enumerate(train_loader):
         print("actual loaded batch = %d" % len(images))
         # measure data loading time
-        #intercept the loop
-        #if i == 0:
+        # intercept the loop
+        # if i == 0:
         for i in range(100000000):
             data_time.update(time.time() - end)
-            fws = time.time_ns()            
+            fws = time.time_ns()
             if args.gpu is not None:
                 images = images.cuda(args.gpu, non_blocking=True)
                 pass
             target = target.cuda(args.gpu, non_blocking=True)
-                
+
             # compute output
             output = model(images)
             loss = criterion(output, target)
@@ -325,7 +332,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             acc_forward += fwe - fws
             #top1.update(acc1[0], images.size(0))
             #top5.update(acc5[0], images.size(0))
-            
+
             # compute gradient and do SGD step
             bws = time.time_ns()
             optimizer.zero_grad()
@@ -341,12 +348,13 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             batch_time.update(time.time() - end)
             end = time.time()
             acc_backward += bwe - bws
-            #print(i)
+            # print(i)
             if i % args.print_freq == 0:
                 progress.display(i)
-                print("[%.2f, %.2f]" % (acc_forward / args.print_freq /1000000.0, acc_backward / args.print_freq/1000000.0), flush=True)
+                print("[%.2f, %.2f]" % (acc_forward / args.print_freq / 1000000.0,
+                                        acc_backward / args.print_freq/1000000.0), flush=True)
                 acc_forward = 0
-                acc_backward = 0     
+                acc_backward = 0
                 pass
             pass
         pass
@@ -405,12 +413,12 @@ def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
+
     def __init__(self, name, fmt=':f'):
         self.name = name
         self.fmt = fmt
-        self.runs = []        
+        self.runs = []
         self.reset()
-
 
     def reset(self):
         self.val = 0
@@ -425,12 +433,14 @@ class AverageMeter(object):
         self.count += n
         #self.avg = self.sum / self.count
         self.runs += [val] * n
-        #skip first run. always wrong
+        # skip first run. always wrong
         self.avg = np.mean(self.runs[1:])
         self.median = np.median(self.runs[1:])
 
     def __str__(self):
-        fmtstr = '{name} {val' + self.fmt + '} Average:[{avg' + self.fmt + '}] Median:[{median' + self.fmt + '}]'
+        fmtstr = '{name} {val' + self.fmt + \
+            '} Average:[{avg' + self.fmt + \
+            '}] Median:[{median' + self.fmt + '}]'
         return fmtstr.format(**self.__dict__)
 
 
@@ -445,7 +455,6 @@ class ProgressMeter(object):
         entries = [self.prefix + self.batch_fmtstr.format(batch)]
         entries += [str(meter) for meter in self.meters]
         print('[%s] ' % self.rank + '\t'.join(entries), flush=True)
-        
 
     def _get_batch_fmtstr(self, num_batches):
         num_digits = len(str(num_batches // 1))
