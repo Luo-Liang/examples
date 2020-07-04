@@ -315,7 +315,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # if i == 0:
         for i in range(100000000):
             data_time.update(time.time() - end)
-            fws = time.time_ns()
+            #fws = time.time_ns()
             if args.gpu is not None:
                 images = images.cuda(args.gpu, non_blocking=True)
                 pass
@@ -328,33 +328,33 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             # measure accuracy and record loss
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
             losses.update(loss.item(), images.size(0))
-            fwe = time.time_ns()
-            acc_forward += fwe - fws
+            #fwe = time.time_ns()
+            #acc_forward += fwe - fws
             #top1.update(acc1[0], images.size(0))
             #top5.update(acc5[0], images.size(0))
 
             # compute gradient and do SGD step
-            bws = time.time_ns()
+            #bws = time.time_ns()
             optimizer.zero_grad()
             loss.backward()
-            bwe = time.time_ns()
+            #bwe = time.time_ns()
 
-            fws = time.time_ns()
+            #fws = time.time_ns()
             optimizer.step()
-            fwe = time.time_ns()
-            acc_forward += fwe - fws
+            #fwe = time.time_ns()
+            #acc_forward += fwe - fws
 
             # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
-            acc_backward += bwe - bws
+            #acc_backward += bwe - bws
             # print(i)
             if i % args.print_freq == 0:
                 progress.display(i)
-                print("[%.2f, %.2f]" % (acc_forward / args.print_freq / 1000000.0,
-                                        acc_backward / args.print_freq/1000000.0), flush=True)
-                acc_forward = 0
-                acc_backward = 0
+                #print("[%.2f, %.2f]" % (acc_forward / args.print_freq / 1000000.0,
+                #                        acc_backward / args.print_freq/1000000.0), flush=True)
+                #acc_forward = 0
+                #acc_backward = 0
                 pass
             pass
         pass
