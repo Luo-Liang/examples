@@ -342,7 +342,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
             # compute gradient and do SGD step
             #bws = time.time_ns()
-            if args.so_no_backward:
+            if args.so_no_backward == False:
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
