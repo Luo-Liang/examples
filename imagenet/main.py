@@ -76,7 +76,8 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
                          'fastest way to use PyTorch for either single node or '
                          'multi node data parallel training')
 parser.add_argument('--tag', default='Unknown Cloud', type=str)
-
+#special options
+parser.add_argument('--so-no-backward', action='store_true', default=False)
 best_acc1 = 0
 
 
@@ -304,13 +305,16 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     model_parameters = [x for x in model.parameters() if x.requires_grad]
     parameters = [np.prod(p.size()) for p in model_parameters]
     params = sum(parameters)
-    max_params = max(parameters)
-    min_params = min(parameters)
+    max_params = max(parameters) * 4
+    min_params = min(parameters) * 4
     #print(model_parameters)
     print("detected model size: %d MB. average = %s B. max = %s B. min = %s Bcnt = %d\n" %
           (params * 4 / 1024 / 1024, params * 4 / len(model_parameters), max_params, min_params, len(model_parameters)))
     acc_forward = 0
     acc_backward = 0
+    if args.so_no_backward:
+        print("warning: backward pass is turned off. benchmark only")
+        pass
     for i, (images, target) in enumerate(train_loader):
         print("actual loaded batch = %d" % len(images))
         # measure data loading time
@@ -338,12 +342,11 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
             # compute gradient and do SGD step
             #bws = time.time_ns()
-            optimizer.zero_grad()
-            loss.backward()
-            #bwe = time.time_ns()
-
-            #fws = time.time_ns()
-            optimizer.step()
+            if args.so_no_backward:
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                pass
             #fwe = time.time_ns()
             #acc_forward += fwe - fws
 
