@@ -308,6 +308,9 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     max_params = max(parameters) * 4
     min_params = min(parameters) * 4
     #print(model_parameters)
+    print("copy below for layer sizes")
+    print([4*x for x in parameters])
+    print()
     print("detected model size: %d MB. average = %s B. max = %s B. min = %s Bcnt = %d\n" %
           (params * 4 / 1024 / 1024, params * 4 / len(model_parameters), max_params, min_params, len(model_parameters)))
     acc_forward = 0
