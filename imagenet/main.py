@@ -79,7 +79,7 @@ parser.add_argument('--tag', default='Unknown Cloud', type=str)
 #special options
 parser.add_argument('--so-no-backward', action='store_true', default=False)
 best_acc1 = 0
-parser.add_argument('--so-one-shot', type=bool, default=False, help='[AutoRun]. Automatically exit script after freq batches')
+parser.add_argument('--so-one-shot', action='store_true', default=False, help='[AutoRun]. Automatically exit script after freq batches')
 
 def main():
     args = parser.parse_args()
