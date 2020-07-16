@@ -349,7 +349,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             end = time.time()
             acc_backward += bwe - bws
             # print(i)
-            if i % args.print_freq == 0:
+            if i % args.print_freq == 0 and args.rank == 0:
                 progress.display(i)
                 print("[%.2f, %.2f]" % (acc_forward / args.print_freq / 1000000.0,
                                         acc_backward / args.print_freq/1000000.0), flush=True)
