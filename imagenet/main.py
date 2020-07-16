@@ -76,7 +76,8 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
                          'fastest way to use PyTorch for either single node or '
                          'multi node data parallel training')
 parser.add_argument('--tag', default='Unknown Cloud', type=str)
-
+#special options
+parser.add_argument('--so-no-backward', action='store_true', default=False)
 best_acc1 = 0
 
 
@@ -301,13 +302,22 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
     end = time.time()
 
-    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
-    params = sum([np.prod(p.size()) for p in model_parameters])
-
-    print("detected model size: %d MB. average = %s KB\n" %
-          (params * 4 / 1024 / 1024, params * 4 / 1024 / len(list(model_parameters))))
+    model_parameters = [x for x in model.parameters() if x.requires_grad]
+    parameters = [np.prod(p.size()) for p in model_parameters]
+    params = sum(parameters)
+    max_params = max(parameters) * 4
+    min_params = min(parameters) * 4
+    #print(model_parameters)
+    print("copy below for layer sizes")
+    print([4*x for x in parameters])
+    print()
+    print("detected model size: %d MB. average = %s B. max = %s B. min = %s Bcnt = %d\n" %
+          (params * 4 / 1024 / 1024, params * 4 / len(model_parameters), max_params, min_params, len(model_parameters)))
     acc_forward = 0
     acc_backward = 0
+    if args.so_no_backward:
+        print("warning: backward pass is turned off. benchmark only")
+        pass
     for i, (images, target) in enumerate(train_loader):
         print("actual loaded batch = %d" % len(images))
         # measure data loading time
@@ -315,7 +325,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # if i == 0:
         for i in range(100000000):
             data_time.update(time.time() - end)
-            fws = time.time_ns()
+            #fws = time.time_ns()
             if args.gpu is not None:
                 images = images.cuda(args.gpu, non_blocking=True)
                 pass
@@ -328,33 +338,32 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             # measure accuracy and record loss
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
             losses.update(loss.item(), images.size(0))
-            fwe = time.time_ns()
-            acc_forward += fwe - fws
+            #fwe = time.time_ns()
+            #acc_forward += fwe - fws
             #top1.update(acc1[0], images.size(0))
             #top5.update(acc5[0], images.size(0))
 
             # compute gradient and do SGD step
-            bws = time.time_ns()
-            optimizer.zero_grad()
-            loss.backward()
-            bwe = time.time_ns()
-
-            fws = time.time_ns()
-            optimizer.step()
-            fwe = time.time_ns()
-            acc_forward += fwe - fws
+            #bws = time.time_ns()
+            if args.so_no_backward == False:
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                pass
+            #fwe = time.time_ns()
+            #acc_forward += fwe - fws
 
             # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
-            acc_backward += bwe - bws
+            #acc_backward += bwe - bws
             # print(i)
             if i % args.print_freq == 0 and args.rank == 0:
                 progress.display(i)
-                print("[%.2f, %.2f]" % (acc_forward / args.print_freq / 1000000.0,
-                                        acc_backward / args.print_freq/1000000.0), flush=True)
-                acc_forward = 0
-                acc_backward = 0
+                #print("[%.2f, %.2f]" % (acc_forward / args.print_freq / 1000000.0,
+                #                        acc_backward / args.print_freq/1000000.0), flush=True)
+                #acc_forward = 0
+                #acc_backward = 0
                 pass
             pass
         pass
