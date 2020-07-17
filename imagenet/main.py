@@ -266,7 +266,8 @@ def main_worker(gpu, ngpus_per_node, args):
 
         # train for one epoch
         train(train_loader, model, criterion, optimizer, epoch, args)
-
+        if args.so_one_shot:
+            return
         # evaluate on validation set
         #acc1 = validate(val_loader, model, criterion, args)
 
@@ -360,9 +361,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             # print(i)
             if i % args.print_freq == 0 and args.rank == 0 and i > 0:
                 progress.display(i)
-                if args.one_shot:
-                    sys.exit()
-                    pass
+                if args.so_one_shot:
+                    return
                 #print("[%.2f, %.2f]" % (acc_forward / args.print_freq / 1000000.0,
                 #                        acc_backward / args.print_freq/1000000.0), flush=True)
                 #acc_forward = 0
