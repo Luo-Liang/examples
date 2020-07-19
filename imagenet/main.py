@@ -360,7 +360,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             #acc_backward += bwe - bws
             # print(i)
             if i % args.print_freq == 0 and  i > 0:
-                if args.ranks == 0:
+                if args.rank == 0:
                     progress.display(i)
                     pass
                 if args.so_one_shot:
