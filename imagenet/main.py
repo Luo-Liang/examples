@@ -359,8 +359,10 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             end = time.time()
             #acc_backward += bwe - bws
             # print(i)
-            if i % args.print_freq == 0 and args.rank == 0 and i > 0:
-                progress.display(i)
+            if i % args.print_freq == 0 and  i > 0:
+                if args.ranks == 0:
+                    progress.display(i)
+                    pass
                 if args.so_one_shot:
                     return
                 #print("[%.2f, %.2f]" % (acc_forward / args.print_freq / 1000000.0,
