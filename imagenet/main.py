@@ -18,7 +18,7 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
 import time
-
+import sys
 
 model_names = sorted(name for name in models.__dict__
                      if name.islower() and not name.startswith("__")
@@ -34,7 +34,7 @@ parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet18',
                     ' (default: resnet18)')
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
-parser.add_argument('--epochs', default=90, type=int, metavar='N',
+parser.add_argument('--epochs', default=1, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -79,7 +79,7 @@ parser.add_argument('--tag', default='Unknown Cloud', type=str)
 #special options
 parser.add_argument('--so-no-backward', action='store_true', default=False)
 best_acc1 = 0
-
+parser.add_argument('--so-one-shot', action='store_true', default=False, help='[AutoRun]. Automatically exit script after freq batches')
 
 def main():
     args = parser.parse_args()
@@ -266,7 +266,8 @@ def main_worker(gpu, ngpus_per_node, args):
 
         # train for one epoch
         train(train_loader, model, criterion, optimizer, epoch, args)
-
+        if args.so_one_shot:
+            return
         # evaluate on validation set
         #acc1 = validate(val_loader, model, criterion, args)
 
@@ -358,8 +359,12 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             end = time.time()
             #acc_backward += bwe - bws
             # print(i)
-            if i % args.print_freq == 0:
-                progress.display(i)
+            if i % args.print_freq == 0 and  i > 0:
+                if args.rank == 0:
+                    progress.display(i)
+                    pass
+                if args.so_one_shot:
+                    return
                 #print("[%.2f, %.2f]" % (acc_forward / args.print_freq / 1000000.0,
                 #                        acc_backward / args.print_freq/1000000.0), flush=True)
                 #acc_forward = 0
