@@ -445,11 +445,13 @@ class AverageMeter(object):
         # skip first run. always wrong
         self.avg = np.mean(self.runs[1:])
         self.median = np.median(self.runs[1:])
+        self.std = np.std(self.runs[1:])
+        pass
 
     def __str__(self):
         fmtstr = '{name} {val' + self.fmt + \
             '} Average:[{avg' + self.fmt + \
-            '}] Median:[{median' + self.fmt + '}]'
+            '}] Median:[{median' + self.fmt + '}] std:[{std' + self.fmt + '}]'
         return fmtstr.format(**self.__dict__)
 
 
