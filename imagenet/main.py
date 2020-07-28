@@ -267,6 +267,7 @@ def main_worker(gpu, ngpus_per_node, args):
         # train for one epoch
         train(train_loader, model, criterion, optimizer, epoch, args)
         if args.so_one_shot:
+            sys.stdout.flush()
             return
         # evaluate on validation set
         #acc1 = validate(val_loader, model, criterion, args)
@@ -439,6 +440,8 @@ class AverageMeter(object):
         self.avg = 0
         self.sum = 0
         self.count = 0
+        self.std = 0
+        self.median = 0
         self.runs.clear()
 
     def update(self, val, n=1):
@@ -448,13 +451,20 @@ class AverageMeter(object):
         #self.avg = self.sum / self.count
         self.runs += [val] * n
         # skip first run. always wrong
-        self.avg = 0 if len(self.runs) == 0 else np.mean(self.runs[1:])
-        self.median = 0 if len(self.runs) == 0 else np.median(self.runs[1:])
+        if len(self.runs) > 0:
+            self.avg = np.mean(self.runs[1:])
+            self.median = np.median(self.runs[1:])
+            self.std = np.std(self.runs[1:])
+            pass
+        else:
+            pass
+        pass
+
 
     def __str__(self):
         fmtstr = '{name} {val' + self.fmt + \
             '} Average:[{avg' + self.fmt + \
-            '}] Median:[{median' + self.fmt + '}]'
+            '}] Median:[{median' + self.fmt + '}] std:[{std' + self.fmt + '}]'
         return fmtstr.format(**self.__dict__)
 
 
