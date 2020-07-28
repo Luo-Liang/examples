@@ -448,8 +448,8 @@ class AverageMeter(object):
         #self.avg = self.sum / self.count
         self.runs += [val] * n
         # skip first run. always wrong
-        self.avg = np.mean(self.runs[1:])
-        self.median = np.median(self.runs[1:])
+        self.avg = 0 if len(self.runs) == 0 else np.mean(self.runs[1:])
+        self.median = 0 if len(self.runs) == 0 else np.median(self.runs[1:])
 
     def __str__(self):
         fmtstr = '{name} {val' + self.fmt + \
