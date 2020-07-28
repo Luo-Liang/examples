@@ -451,7 +451,7 @@ class AverageMeter(object):
         #self.avg = self.sum / self.count
         self.runs += [val] * n
         # skip first run. always wrong
-        if len(self.runs) > 0:
+        if len(self.runs) > 1:
             self.avg = np.mean(self.runs[1:])
             self.median = np.median(self.runs[1:])
             self.std = np.std(self.runs[1:])
