@@ -19,6 +19,7 @@ import torchvision.datasets as datasets
 import torchvision.models as models
 import time
 import sys
+from torchsummary import summary_string
 
 model_names = sorted(name for name in models.__dict__
                      if name.islower() and not name.startswith("__")
@@ -310,11 +311,11 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     max_params = max(parameters) * 4
     min_params = min(parameters) * 4
     #print(model_parameters)
+
     print("copy below for layer sizes")
-    print([4*x for x in parameters])
-    print()
-    print("detected model size: %d MB. average = %s B. max = %s B. min = %s Bcnt = %d\n" %
-          (params * 4 / 1024 / 1024, params * 4 / len(model_parameters), max_params, min_params, len(model_parameters)))
+    #print([4*x for x in parameters])
+    #print("detected model size: %d MB. average = %s B. max = %s B. min = %s Bcnt = %d\n" %
+    #      (params * 4 / 1024 / 1024, params * 4 / len(model_parameters), max_params, min_params, len(model_parameters)))
     acc_forward = 0
     acc_backward = 0
     if args.so_no_backward:
@@ -325,6 +326,11 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # measure data loading time
         # intercept the loop
         # if i == 0:
+        #print("informational: model names")
+        _, params1 = summary_string(model, input_size=(3,224,224))
+        assert sum(params1) == params
+        print(params1)
+        
         for i in range(100000000):
             data_time.update(time.time() - end)
             #fws = time.time_ns()
