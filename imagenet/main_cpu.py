@@ -17,22 +17,25 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
+import time
+import sys
+from torchsummary import summary_string
 
 model_names = sorted(name for name in models.__dict__
-    if name.islower() and not name.startswith("__")
-    and callable(models.__dict__[name]))
+                     if name.islower() and not name.startswith("__")
+                     and callable(models.__dict__[name]))
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
-parser.add_argument('data', metavar='DIR',
-                    help='path to dataset')
+parser.add_argument('--data', type=str,
+                    help='path to dataset', default=None)
 parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet18',
                     choices=model_names,
                     help='model architecture: ' +
-                        ' | '.join(model_names) +
-                        ' (default: resnet18)')
+                    ' | '.join(model_names) +
+                    ' (default: resnet18)')
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
-parser.add_argument('--epochs', default=90, type=int, metavar='N',
+parser.add_argument('--epochs', default=1, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -74,13 +77,14 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
                          'fastest way to use PyTorch for either single node or '
                          'multi node data parallel training')
 parser.add_argument('--tag', default='Unknown Cloud', type=str)
-
+#special options
+parser.add_argument('--so-no-backward', action='store_true', default=False)
 best_acc1 = 0
-
+parser.add_argument('--so-one-shot', action='store_true', default=False, help='[AutoRun]. Automatically exit script after freq batches')
 
 def main():
     args = parser.parse_args()
-
+    args.gpu = None
     if args.seed is not None:
         random.seed(args.seed)
         torch.manual_seed(args.seed)
@@ -107,7 +111,8 @@ def main():
         args.world_size = ngpus_per_node * args.world_size
         # Use torch.multiprocessing.spawn to launch distributed processes: the
         # main_worker process function
-        mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args))
+        mp.spawn(main_worker, nprocs=ngpus_per_node,
+                 args=(ngpus_per_node, args))
     else:
         # Simply call main_worker function
         main_worker(args.gpu, ngpus_per_node, args)
@@ -115,7 +120,7 @@ def main():
 
 def main_worker(gpu, ngpus_per_node, args):
     global best_acc1
-    args.gpu = gpu
+    args.gpu = None
 
     if args.gpu is not None:
         print("Use GPU: {} for training".format(args.gpu))
@@ -142,23 +147,24 @@ def main_worker(gpu, ngpus_per_node, args):
         # should always set the single device scope, otherwise,
         # DistributedDataParallel will use all available devices.
         if args.gpu is not None:
-            #torch.cuda.set_device(args.gpu)
-            #model.cuda(args.gpu)
+            torch.cuda.set_device(args.gpu)
+            model.cuda(args.gpu)
             # When using a single GPU per process and per
             # DistributedDataParallel, we need to divide the batch size
             # ourselves based on the total number of GPUs we have
             args.batch_size = int(args.batch_size / ngpus_per_node)
-            args.workers = int((args.workers + ngpus_per_node - 1) / ngpus_per_node)
-            model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
+            args.workers = int(
+                (args.workers + ngpus_per_node - 1) / ngpus_per_node)
+            model = torch.nn.parallel.DistributedDataParallel(
+                model, device_ids=[args.gpu])
         else:
             #model.cuda()
             # DistributedDataParallel will divide and allocate batch_size to all
             # available GPUs if device_ids are not set
             model = torch.nn.parallel.DistributedDataParallel(model)
     elif args.gpu is not None:
-        #torch.cuda.set_device(args.gpu)
-        #model = model.cuda(args.gpu)
-        pass
+        torch.cuda.set_device(args.gpu)
+        model = model.cuda(args.gpu)
     else:
         # DataParallel will divide and allocate batch_size to all available GPUs
         if args.arch.startswith('alexnet') or args.arch.startswith('vgg'):
@@ -199,38 +205,56 @@ def main_worker(gpu, ngpus_per_node, args):
     cudnn.benchmark = True
 
     # Data loading code
-    traindir = os.path.join(args.data, 'train')
-    valdir = os.path.join(args.data, 'val')
+    if args.data != None:
+        traindir = os.path.join(args.data, 'train')
+        valdir = os.path.join(args.data, 'val')
+        pass
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
+    transform = transforms.Compose([
+        # you can add other transformations in this list
+        transforms.RandomResizedCrop(224),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        normalize,
+    ])
+    if args.data == None:
+        train_dataset = datasets.FakeData(size=100000000, image_size=(
+            3, 224, 224), num_classes=200, transform=transform)
+        val_loader = torch.utils.data.DataLoader(datasets.FakeData(
+            size=1001, image_size=(3, 224, 224), num_classes=200, transform=transform))
+        pass
+    else:
+        train_dataset = datasets.ImageFolder(
+            traindir,
+            transforms.Compose([
+                transforms.RandomResizedCrop(224),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                normalize,
+            ]))
+        val_loader = torch.utils.data.DataLoader(
+            datasets.ImageFolder(valdir, transforms.Compose([
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                normalize,
+            ])),
+            batch_size=args.batch_size, shuffle=False,
+            num_workers=args.workers, pin_memory=True)
 
-    train_dataset = datasets.ImageFolder(
-        traindir,
-        transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            normalize,
-        ]))
+        pass
 
     if args.distributed:
-        train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
+        train_sampler = torch.utils.data.distributed.DistributedSampler(
+            train_dataset)
     else:
         train_sampler = None
 
     train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=args.batch_size, shuffle=(train_sampler is None),
+        train_dataset, batch_size=args.batch_size, shuffle=(
+            train_sampler is None),
         num_workers=args.workers, pin_memory=True, sampler=train_sampler)
-
-    val_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(valdir, transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            normalize,
-        ])),
-        batch_size=args.batch_size, shuffle=False,
-        num_workers=args.workers, pin_memory=True)
 
     if args.evaluate:
         validate(val_loader, model, criterion, args)
@@ -243,15 +267,17 @@ def main_worker(gpu, ngpus_per_node, args):
 
         # train for one epoch
         train(train_loader, model, criterion, optimizer, epoch, args)
-
+        if args.so_one_shot:
+            sys.stdout.flush()
+            return
         # evaluate on validation set
-        acc1 = validate(val_loader, model, criterion, args)
+        #acc1 = validate(val_loader, model, criterion, args)
 
         # remember best acc@1 and save checkpoint
-        is_best = acc1 > best_acc1
-        best_acc1 = max(acc1, best_acc1)
+        #is_best = acc1 > best_acc1
+        #best_acc1 = max(acc1, best_acc1)
 
-        #if not args.multiprocessing_distributed or (args.multiprocessing_distributed
+        # if not args.multiprocessing_distributed or (args.multiprocessing_distributed
         #        and args.rank % ngpus_per_node == 0):
         #    save_checkpoint({
         #        'epoch': epoch + 1,
@@ -271,6 +297,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     progress = ProgressMeter(
         len(train_loader),
         [batch_time],
+        args.rank,
         prefix="Net: {} world: {} batch:{} on {}".format(args.arch, args.world_size, args.batch_size, args.tag))
 
     # switch to train mode
@@ -278,44 +305,78 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
     end = time.time()
 
-    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
-    params = sum([np.prod(p.size()) for p in model_parameters])
+    model_parameters = [x for x in model.parameters() if x.requires_grad]
+    parameters = [np.prod(p.size()) for p in model_parameters]
+    params = sum(parameters)
+    max_params = max(parameters) * 4
+    min_params = min(parameters) * 4
+    #print(model_parameters)
 
-    print("detected model size: %d MB\n" % (params * 4 / 1024 / 1024))
-
-    
+    print("copy below for layer sizes")
+    #print([4*x for x in parameters])
+    #print("detected model size: %d MB. average = %s B. max = %s B. min = %s Bcnt = %d\n" %
+    #      (params * 4 / 1024 / 1024, params * 4 / len(model_parameters), max_params, min_params, len(model_parameters)))
+    acc_forward = 0
+    acc_backward = 0
+    if args.so_no_backward:
+        print("warning: backward pass is turned off. benchmark only")
+        pass
     for i, (images, target) in enumerate(train_loader):
+        print("actual loaded batch = %d" % len(images))
         # measure data loading time
-        #intercept the loop
-        for i in range(10000):
+        # intercept the loop
+        # if i == 0:
+        #print("informational: model names")
+        #_, params1, backward_ts = summary_string(model, input_size=(3,224,224))
+        #assert sum(params1) == params
+        #convert to bytes
+        #print([4 * p for p in params1])
+        #print(backward_ts, flush=True)
+        for i in range(100000000):
             data_time.update(time.time() - end)
-            
+            #fws = time.time_ns()
             if args.gpu is not None:
                 images = images.cuda(args.gpu, non_blocking=True)
                 pass
             #target = target.cuda(args.gpu, non_blocking=True)
-                
+
             # compute output
             output = model(images)
             loss = criterion(output, target)
 
             # measure accuracy and record loss
-            #acc1, acc5 = accuracy(output, target, topk=(1, 5))
+            acc1, acc5 = accuracy(output, target, topk=(1, 5))
             losses.update(loss.item(), images.size(0))
+            #fwe = time.time_ns()
+            #acc_forward += fwe - fws
             #top1.update(acc1[0], images.size(0))
             #top5.update(acc5[0], images.size(0))
-            
+
             # compute gradient and do SGD step
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            #bws = time.time_ns()
+            if args.so_no_backward == False:
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                pass
+            #fwe = time.time_ns()
+            #acc_forward += fwe - fws
 
             # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
-            #print(i)
-            if i % args.print_freq == 0:
-                progress.display(i)
+            #acc_backward += bwe - bws
+            # print(i)
+            if i % args.print_freq == 0 and  i > 0:
+                if args.rank == 0:
+                    progress.display(i)
+                    pass
+                if args.so_one_shot:
+                    return
+                #print("[%.2f, %.2f]" % (acc_forward / args.print_freq / 1000000.0,
+                #                        acc_backward / args.print_freq/1000000.0), flush=True)
+                #acc_forward = 0
+                #acc_backward = 0
                 pass
             pass
         pass
@@ -329,6 +390,7 @@ def validate(val_loader, model, criterion, args):
     progress = ProgressMeter(
         len(val_loader),
         [batch_time, losses, top1, top5],
+        args.rank,
         prefix='Test: ')
 
     # switch to evaluate mode
@@ -373,9 +435,11 @@ def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
+
     def __init__(self, name, fmt=':f'):
         self.name = name
         self.fmt = fmt
+        self.runs = []
         self.reset()
 
     def reset(self):
@@ -383,29 +447,45 @@ class AverageMeter(object):
         self.avg = 0
         self.sum = 0
         self.count = 0
+        self.std = 0
+        self.median = 0
+        self.runs.clear()
 
     def update(self, val, n=1):
         self.val = val
         self.sum += val * n
         self.count += n
-        self.avg = self.sum / self.count
+        #self.avg = self.sum / self.count
+        self.runs += [val] * n
+        # skip first run. always wrong
+        if len(self.runs) > 1:
+            self.avg = np.mean(self.runs[1:])
+            self.median = np.median(self.runs[1:])
+            self.std = np.std(self.runs[1:])
+            pass
+        else:
+            pass
+        pass
+
 
     def __str__(self):
-        fmtstr = '{name} {val' + self.fmt + '} Average:[{avg' + self.fmt + '}]'
+        fmtstr = '{name} {val' + self.fmt + \
+            '} Average:[{avg' + self.fmt + \
+            '}] Median:[{median' + self.fmt + '}] std:[{std' + self.fmt + '}]'
         return fmtstr.format(**self.__dict__)
 
 
 class ProgressMeter(object):
-    def __init__(self, num_batches, meters, prefix=""):
+    def __init__(self, num_batches, meters, rank, prefix=""):
         self.batch_fmtstr = self._get_batch_fmtstr(num_batches)
         self.meters = meters
         self.prefix = prefix
+        self.rank = rank
 
     def display(self, batch):
         entries = [self.prefix + self.batch_fmtstr.format(batch)]
         entries += [str(meter) for meter in self.meters]
-        print('\t'.join(entries), flush=True)
-        
+        print('[%s] ' % self.rank + '\t'.join(entries), flush=True)
 
     def _get_batch_fmtstr(self, num_batches):
         num_digits = len(str(num_batches // 1))
