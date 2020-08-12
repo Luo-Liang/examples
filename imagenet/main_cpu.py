@@ -84,7 +84,7 @@ parser.add_argument('--so-one-shot', action='store_true', default=False, help='[
 
 def main():
     args = parser.parse_args()
-
+    args.gpu = None
     if args.seed is not None:
         random.seed(args.seed)
         torch.manual_seed(args.seed)
