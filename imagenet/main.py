@@ -135,7 +135,7 @@ def main_worker(gpu, ngpus_per_node, args):
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
     # create model
-    if 'googlenet' or 'inception' in args.arch:
+    if 'googlenet' in args.arch or 'inception' in args.arch:
         if args.pretrained:
             print("=> using pre-trained model '{}'".format(args.arch))
             model = models.__dict__[args.arch](pretrained=True, aux_logits=False)
