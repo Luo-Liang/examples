@@ -136,7 +136,12 @@ def main_worker(gpu, ngpus_per_node, args):
         if args.multiprocessing_distributed:
             # For multiprocessing distributed training, rank needs to be the
             # global rank among all the processes
-            args.rank = args.rank * ngpus_per_node + gpu
+            print("base rank = %s, actual rank = %s. gpu = %s. world_size = %s." % (args.rank, args.rank + gpu, gpu, args.world_size))
+            args.rank = args.rank + gpu
+            #args.rank = args.rank * ngpus_per_node + gpu
+            pass
+            
+
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
     # create model
@@ -367,7 +372,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         print("warning: backward pass is turned off. benchmark only")
         pass
     for i, (images, target) in enumerate(train_loader):
-        print("actual loaded batch = %d" % len(images))
+        #print("actual loaded batch = %d" % len(images))
         # measure data loading time
         # intercept the loop
         # if i == 0:
