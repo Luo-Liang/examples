@@ -327,11 +327,11 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # intercept the loop
         # if i == 0:
         #print("informational: model names")
-        _, params1, backward_ts = summary_string(model, input_size=(3,224,224))
-        assert sum(params1) == params
+        #_, params1, backward_ts = summary_string(model, input_size=(3,224,224))
+        #assert sum(params1) == params
         #convert to bytes
-        print([4 * p for p in params1])
-        print(backward_ts, flush=True)
+        #print([4 * p for p in params1])
+        #print(backward_ts, flush=True)
         for i in range(100000000):
             data_time.update(time.time() - end)
             #fws = time.time_ns()
