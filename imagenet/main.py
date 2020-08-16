@@ -380,6 +380,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             _, params1, backward_ts = summary_string(model, input_size=image_size)
             assert sum(params1) == params
             print([4 * p for p in params1])
+            print(backward_ts, flush=True)
             pass
 
         #print(target)
