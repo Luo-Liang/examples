@@ -135,12 +135,24 @@ def main_worker(gpu, ngpus_per_node, args):
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
     # create model
-    if args.pretrained:
-        print("=> using pre-trained model '{}'".format(args.arch))
-        model = models.__dict__[args.arch](pretrained=True)
+    if 'googlenet' in args.arch or 'inception' in args.arch:
+        if args.pretrained:
+            print("=> using pre-trained model '{}'".format(args.arch))
+            model = models.__dict__[args.arch](pretrained=True, aux_logits=False)
+        else:
+            print("=> creating model '{}'".format(args.arch))
+            model = models.__dict__[args.arch](aux_logits=False)
+            pass
+        pass
     else:
-        print("=> creating model '{}'".format(args.arch))
-        model = models.__dict__[args.arch]()
+        if args.pretrained:
+            print("=> using pre-trained model '{}'".format(args.arch))
+            model = models.__dict__[args.arch](pretrained=True)
+        else:
+            print("=> creating model '{}'".format(args.arch))
+            model = models.__dict__[args.arch]()
+            pass
+        pass
 
     if args.distributed:
         # For multiprocessing distributed, DistributedDataParallel constructor
@@ -174,6 +186,7 @@ def main_worker(gpu, ngpus_per_node, args):
             model = torch.nn.DataParallel(model).cuda()
 
     # define loss function (criterion) and optimizer
+    print("args.gpu is %s" % args.gpu)
     criterion = nn.CrossEntropyLoss().cuda(args.gpu)
 
     optimizer = torch.optim.SGD(model.parameters(), args.lr,
@@ -211,6 +224,7 @@ def main_worker(gpu, ngpus_per_node, args):
         pass
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
+
     transform = transforms.Compose([
         # you can add other transformations in this list
         transforms.RandomResizedCrop(224),
@@ -218,11 +232,26 @@ def main_worker(gpu, ngpus_per_node, args):
         transforms.ToTensor(),
         normalize,
     ])
+    if 'inception' in args.arch or 'googlenet' in args.arch:
+        print("changing image_size to 3,299,299")
+        image_size = (3,299,299)
+        #overwrite transform
+        transform = transforms.Compose([
+        # you can add other transformations in this list
+            transforms.RandomResizedCrop(299),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            normalize,
+        ])
+        pass
+    else:
+        image_size = (3,224,224)
+        pass
+    
     if args.data == None:
-        train_dataset = datasets.FakeData(size=100000000, image_size=(
-            3, 224, 224), num_classes=200, transform=transform)
+        train_dataset = datasets.FakeData(size=100000000, image_size=image_size, num_classes=200, transform=transform)
         val_loader = torch.utils.data.DataLoader(datasets.FakeData(
-            size=1001, image_size=(3, 224, 224), num_classes=200, transform=transform))
+            size=1001, image_size=image_size, num_classes=200, transform=transform))
         pass
     else:
         train_dataset = datasets.ImageFolder(
@@ -316,6 +345,17 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     #print([4*x for x in parameters])
     #print("detected model size: %d MB. average = %s B. max = %s B. min = %s Bcnt = %d\n" %
     #      (params * 4 / 1024 / 1024, params * 4 / len(model_parameters), max_params, min_params, len(model_parameters)))
+
+
+    if 'inception' in args.arch or 'googlenet' in args.arch:
+        image_size = (3,299,299)
+        #overwrite transform
+        pass
+    else:
+        image_size = (3,224,224)
+        pass
+
+    
     acc_forward = 0
     acc_backward = 0
     if args.so_no_backward:
@@ -327,11 +367,13 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # intercept the loop
         # if i == 0:
         #print("informational: model names")
-        #_, params1, backward_ts = summary_string(model, input_size=(3,224,224))
+        #_, params1, backward_ts = summary_string(model, input_size=image_size)
         #assert sum(params1) == params
         #convert to bytes
         #print([4 * p for p in params1])
         #print(backward_ts, flush=True)
+        #print(target)
+
         for i in range(100000000):
             data_time.update(time.time() - end)
             #fws = time.time_ns()
