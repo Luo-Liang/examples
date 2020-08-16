@@ -82,7 +82,7 @@ parser.add_argument('--so-no-backward', action='store_true', default=False)
 best_acc1 = 0
 parser.add_argument('--so-one-shot', action='store_true', default=False, help='[AutoRun]. Automatically exit script after freq batches')
 parser.add_argument('--layer-info', default=False, action='store_true')
-parser.add_argument('--world-size-override', default=-1, type=int, help='allows irregular GPU training')
+parser.add_argument('--so-world-size-override', default=-1, type=int, help='allows irregular GPU training')
 def main():
     args = parser.parse_args()
 
@@ -110,7 +110,7 @@ def main():
         # Since we have ngpus_per_node processes per node, the total world_size
         # needs to be adjusted accordingly
         args.world_size = ngpus_per_node * args.world_size
-        if args.world_size_override != -1:
+        if args.so_world_size_override != -1:
             print("warning: overriding args.world_size")
             args.world_size = args.world_size_override
             pass
