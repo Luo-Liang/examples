@@ -81,7 +81,8 @@ parser.add_argument('--tag', default='Unknown Cloud', type=str)
 parser.add_argument('--so-no-backward', action='store_true', default=False)
 best_acc1 = 0
 parser.add_argument('--so-one-shot', action='store_true', default=False, help='[AutoRun]. Automatically exit script after freq batches')
-
+parser.add_argument('--layer-info', default=False, action='store_true')
+parser.add_argument('--world-size-override', default=-1, type=int, help='allows irregular GPU training')
 def main():
     args = parser.parse_args()
 
@@ -109,6 +110,10 @@ def main():
         # Since we have ngpus_per_node processes per node, the total world_size
         # needs to be adjusted accordingly
         args.world_size = ngpus_per_node * args.world_size
+        if args.world_size_override != -1:
+            print("warning: overriding args.world_size")
+            args.world_size = args.world_size_override
+            pass
         # Use torch.multiprocessing.spawn to launch distributed processes: the
         # main_worker process function
         mp.spawn(main_worker, nprocs=ngpus_per_node,
@@ -366,12 +371,12 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # measure data loading time
         # intercept the loop
         # if i == 0:
-        #print("informational: model names")
-        #_, params1, backward_ts = summary_string(model, input_size=image_size)
-        #assert sum(params1) == params
-        #convert to bytes
-        #print([4 * p for p in params1])
-        #print(backward_ts, flush=True)
+        if args.layer_info:
+            _, params1, backward_ts = summary_string(model, input_size=image_size)
+            assert sum(params1) == params
+            print([4 * p for p in params1])
+            pass
+
         #print(target)
 
         for i in range(100000000):
