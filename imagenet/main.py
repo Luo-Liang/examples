@@ -112,7 +112,7 @@ def main():
         args.world_size = ngpus_per_node * args.world_size
         if args.so_world_size_override != -1:
             print("warning: overriding args.world_size")
-            args.world_size = args.world_size_override
+            args.world_size = args.so_world_size_override
             pass
         # Use torch.multiprocessing.spawn to launch distributed processes: the
         # main_worker process function
