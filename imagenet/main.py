@@ -141,7 +141,7 @@ def main_worker(gpu, ngpus_per_node, args):
             #args.rank = args.rank * ngpus_per_node + gpu
             pass
             
-
+        print("[%d] real rank. world_size = %d" % (args.rank, args.world_size))
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
     # create model
