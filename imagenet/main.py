@@ -141,7 +141,7 @@ def main_worker(gpu, ngpus_per_node, args):
             #args.rank = args.rank * ngpus_per_node + gpu
             pass
             
-
+        print("[%d] real rank. world_size = %d" % (args.rank, args.world_size))
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
     # create model
@@ -377,9 +377,12 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # intercept the loop
         # if i == 0:
         if args.so_layer_info:
-            _, params1, backward_ts = summary_string(model, input_size=image_size)
-            assert sum(params1) == params
-            print([4 * p for p in params1])
+            _, params1, backward_ts = summary_string(model, input_size=image_size, bucketize=True)
+            if sum(params1) != params * 4:
+                print(sum(params1))
+                print(params * 4)
+                assert sum(params1) == params * 4
+            print(params1, flush=True)
             print(backward_ts, flush=True)
             pass
 
