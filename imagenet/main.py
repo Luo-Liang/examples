@@ -378,7 +378,10 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # if i == 0:
         if args.so_layer_info:
             _, params1, backward_ts = summary_string(model, input_size=image_size, bucketize=True)
-            assert sum(params1) == params * 4
+            if sum(params1) != params * 4:
+                print(sum(params1))
+                print(params * 4)
+                assert sum(params1) == params * 4
             print(params1, flush=True)
             print(backward_ts, flush=True)
             pass
