@@ -374,6 +374,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     if args.so_no_backward:
         print("warning: backward pass is turned off. benchmark only")
         pass
+    iteration = 0
     for i, (images, target) in enumerate(train_loader):
         #print("actual loaded batch = %d" % len(images))
         # measure data loading time
@@ -390,7 +391,6 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             pass
 
         #print(target)
-        iteration = 0
         for i in range(100000000) if args.data == None else range(1):
             data_time.update(time.time() - end)
             #fws = time.time_ns()
@@ -408,8 +408,10 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             losses.update(loss.item(), images.size(0))
             #fwe = time.time_ns()
             #acc_forward += fwe - fws
-            #top1.update(acc1[0], images.size(0))
-            #top5.update(acc5[0], images.size(0))
+            if args.data != None:
+                top1.update(acc1[0], images.size(0))
+                top5.update(acc5[0], images.size(0))
+                pass
 
             # compute gradient and do SGD step
             #bws = time.time_ns()
@@ -432,6 +434,10 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
                     pass
                 if args.so_one_shot:
                     return
+                if args.data != None:
+                    print(top5)
+                    print(top1)
+                    pass
                 #print("[%.2f, %.2f]" % (acc_forward / args.print_freq / 1000000.0,
                 #                        acc_backward / args.print_freq/1000000.0), flush=True)
                 #acc_forward = 0
