@@ -431,13 +431,13 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             if iteration % args.print_freq == 0 and  iteration > 0:
                 if args.rank == 0:
                     progress.display(iteration)
-                    pass
-                if args.so_one_shot:
-                    return
-                if args.data != None:
+                    if args.data != None:
                     print(top5)
                     print(top1)
                     pass
+                if args.so_one_shot:
+                    return
+
                 #print("[%.2f, %.2f]" % (acc_forward / args.print_freq / 1000000.0,
                 #                        acc_backward / args.print_freq/1000000.0), flush=True)
                 #acc_forward = 0
