@@ -83,9 +83,9 @@ best_acc1 = 0
 parser.add_argument('--so-one-shot', action='store_true', default=False, help='[AutoRun]. Automatically exit script after freq batches')
 parser.add_argument('--so-layer-info', default=False, action='store_true')
 parser.add_argument('--so-world-size-override', default=-1, type=int, help='allows irregular GPU training')
-def main():
-    args = parser.parse_args()
+args = parser.parse_args()
 
+def main():
     if args.seed is not None:
         random.seed(args.seed)
         torch.manual_seed(args.seed)
