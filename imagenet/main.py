@@ -432,8 +432,9 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
                 if args.rank == 0:
                     progress.display(iteration)
                     if args.data != None:
-                    print(top5)
-                    print(top1)
+                        print(top5)
+                        print(top1)
+                        pass
                     pass
                 if args.so_one_shot:
                     return
