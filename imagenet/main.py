@@ -391,7 +391,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
         #print(target)
 
-        for i in range(100000000):
+        for i in range(100000000) if args.data == None else range(1):
             data_time.update(time.time() - end)
             #fws = time.time_ns()
             if args.gpu is not None:
