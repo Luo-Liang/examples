@@ -310,7 +310,10 @@ def main_worker(gpu, ngpus_per_node, args):
             sys.stdout.flush()
             return
         # evaluate on validation set
-        #acc1 = validate(val_loader, model, criterion, args)
+        if args.data != None:
+            acc1 = validate(val_loader, model, criterion, args)
+            print(acc1)
+            pass
 
         # remember best acc@1 and save checkpoint
         #is_best = acc1 > best_acc1
