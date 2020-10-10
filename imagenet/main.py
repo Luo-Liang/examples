@@ -518,18 +518,26 @@ class AverageMeter(object):
         self.runs.clear()
 
     def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        #self.avg = self.sum / self.count
-        self.runs += [val] * n
-        # skip first run. always wrong
-        if len(self.runs) > 1:
-            self.avg = np.mean(self.runs[1:])
-            self.median = np.median(self.runs[1:])
-            self.std = np.std(self.runs[1:])
+        if args.data == None:
+            self.val = val
+            self.sum += val * n
+            self.count += n
+            #self.avg = self.sum / self.count
+            self.runs += [val] * n
+            # skip first run. always wrong
+            if len(self.runs) > 1:
+                self.avg = np.mean(self.runs[1:])
+                self.median = np.median(self.runs[1:])
+                self.std = np.std(self.runs[1:])
+                pass
+            else:
+                pass
             pass
         else:
+            self.val = val
+            self.sum += val * n
+            self.count += n
+            self.avg = self.sum / self.count
             pass
         pass
 
