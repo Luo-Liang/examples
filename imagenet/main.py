@@ -390,7 +390,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             pass
 
         #print(target)
-
+        iteration = 0
         for i in range(100000000) if args.data == None else range(1):
             data_time.update(time.time() - end)
             #fws = time.time_ns()
@@ -426,9 +426,9 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             end = time.time()
             #acc_backward += bwe - bws
             # print(i)
-            if i % args.print_freq == 0 and  i > 0:
+            if iteration % args.print_freq == 0 and  iteration > 0:
                 if args.rank == 0:
-                    progress.display(i)
+                    progress.display(iteration)
                     pass
                 if args.so_one_shot:
                     return
@@ -437,6 +437,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
                 #acc_forward = 0
                 #acc_backward = 0
                 pass
+            iteration += 1
             pass
         pass
 
